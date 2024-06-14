@@ -19,7 +19,9 @@ contract ERC721PartnerSeaDropRandomOffset is ERC721PartnerSeaDrop {
 
     /// @notice If the collection has been revealed and the randomOffset has
     ///         been set.
-    bool public revealed;
+    uint256 public constant REVEALED_FALSE = 1;
+    uint256 public constant REVEALED_TRUE = 2;
+    uint256 public revealed = REVEALED_FALSE;
 
     /// @notice Revert when setting the randomOffset if already set.
     error AlreadyRevealed();
@@ -46,10 +48,11 @@ contract ERC721PartnerSeaDropRandomOffset is ERC721PartnerSeaDrop {
      *         reveal.
      */
     function setRandomOffset() external onlyOwner {
-        if (revealed) {
+        if (revealed == REVEALED_TRUE) {
             revert AlreadyRevealed();
         }
-        if (_totalMinted() != _maxSupply) {
+        uint256 maxSupply = _maxSupply;
+        if (_totalMinted() != maxSupply) {
             revert NotFullyMinted();
         }
         // block.difficulty returns PREVRANDAO on Ethereum post-merge
@@ -57,9 +60,9 @@ contract ERC721PartnerSeaDropRandomOffset is ERC721PartnerSeaDrop {
         // randomOffset returns between 1 and MAX_SUPPLY
         randomOffset =
             (uint256(keccak256(abi.encode(block.difficulty))) %
-                (_maxSupply - 1)) +
+                (maxSupply - 1)) +
             1;
-        revealed = true;
+        revealed = REVEALED_TRUE;
     }
 
     /**
@@ -72,17 +75,17 @@ contract ERC721PartnerSeaDropRandomOffset is ERC721PartnerSeaDrop {
         public
         view
         override
-        returns (string memory)
+        returns (string memory base)
     {
         if (!_exists(tokenId)) {
             revert URIQueryForNonexistentToken();
         }
 
-        string memory base = _baseURI();
+        base = _baseURI();
         if (bytes(base).length == 0) {
             // If there is no baseURI set, return an empty string.
             return "";
-        } else if (!revealed) {
+        } else if (revealed == REVEALED_FALSE) {
             // If the baseURI is set but the collection is not revealed yet,
             // return just the baseURI.
             return base;

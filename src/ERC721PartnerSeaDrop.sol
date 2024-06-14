@@ -278,7 +278,7 @@ contract ERC721PartnerSeaDrop is ERC721SeaDrop, TwoStepAdministered {
     function updateSignedMintValidationParams(
         address seaDropImpl,
         address signer,
-        SignedMintValidationParams memory signedMintValidationParams
+        SignedMintValidationParams calldata signedMintValidationParams
     )
         external
         virtual
